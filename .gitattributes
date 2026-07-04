@@ -1,0 +1,41 @@
+# ProjectForge AI — Git line ending normalization
+# Ensures consistent line endings across Windows/Mac/Linux
+
+# Auto detect text files and normalize to LF in repo
+* text=auto eol=lf
+
+# Force LF for source files
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.css     text eol=lf
+*.html    text eol=lf
+*.json    text eol=lf
+*.java    text eol=lf
+*.py      text eol=lf
+*.xml     text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.md      text eol=lf
+*.txt     text eol=lf
+*.sh      text eol=lf
+*.env     text eol=lf
+
+# Dockerfile
+Dockerfile    text eol=lf
+*.dockerfile  text eol=lf
+
+# Keep binaries as-is
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.svg    text eol=lf
+*.jar    binary
+*.war    binary
+*.zip    binary
+*.tar    binary
+*.gz     binary

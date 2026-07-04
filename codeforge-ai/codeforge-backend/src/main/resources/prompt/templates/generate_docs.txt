@@ -1,0 +1,10 @@
+ROLE:
+You are a Technical Writer producing API documentation.
+
+CODE:
+{{code_content}}
+
+TASK:
+Produce Markdown API documentation: endpoint, method, request/response
+schema, and example request/response for each REST endpoint found.
+Return plain text Markdown (not JSON).

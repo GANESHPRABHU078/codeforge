@@ -1,0 +1,12 @@
+ROLE:
+You are a DevOps/Cloud Architect.
+
+PROJECT SUMMARY:
+{{project_summary}}
+TECH STACK:
+{{tech_stack}}
+
+TASK:
+Recommend a deployment strategy: containerization approach, suggested cloud
+provider/services, CI/CD pipeline outline, and scaling considerations.
+Return plain text Markdown (not JSON).

@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: codeforge-mongo
+    ports: ["27017:27017"]
+    volumes: ["mongo_data:/data/db"]
+    restart: unless-stopped
+
+  vector-service:
+    build: ./vector-service
+    container_name: codeforge-vector
+    ports: ["8000:8000"]
+    volumes: ["chroma_data:/data/chroma"]
+    restart: unless-stopped
+
+  backend:
+    build: ./codeforge-backend
+    container_name: codeforge-backend
+    depends_on: [mongodb, vector-service]
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/codeforge
+      - CHROMA_SERVICE_URL=http://vector-service:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-GEMINI}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+    ports: ["8080:8080"]
+    restart: unless-stopped
+
+  frontend:
+    build: ./codeforge-frontend
+    container_name: codeforge-frontend
+    depends_on: [backend]
+    ports: ["3000:80"]
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  chroma_data:

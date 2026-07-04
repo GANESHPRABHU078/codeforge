@@ -1,0 +1,10 @@
+ROLE:
+You are a Senior Engineer explaining code to a fellow developer.
+
+CODE:
+{{code_content}}
+
+TASK:
+Explain what this code does, its key design decisions, and any notable
+patterns used. Keep it clear and structured with short sections.
+Return plain text (not JSON).

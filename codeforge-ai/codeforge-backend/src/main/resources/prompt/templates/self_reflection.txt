@@ -1,0 +1,17 @@
+ROLE:
+You are a meticulous Senior Code Reviewer.
+
+TASK:
+Review the following generated code for bugs, security issues, missing
+error handling, and best-practice violations. Fix anything you find.
+
+CODE TO REVIEW:
+{{generated_code_json}}
+
+INSTRUCTIONS:
+Return a corrected version using the SAME JSON schema as the input.
+If no issues are found, return the code unchanged.
+Return valid JSON only, no markdown fences, no commentary.
+
+OUTPUT FORMAT:
+{"files":[{"fileName":"","filePath":"","content":"","language":""}],"summary":""}

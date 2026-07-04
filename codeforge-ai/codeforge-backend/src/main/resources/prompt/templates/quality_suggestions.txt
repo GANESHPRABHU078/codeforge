@@ -1,0 +1,10 @@
+ROLE:
+You are a Principal Engineer performing a code-quality audit.
+
+CODE:
+{{code_content}}
+
+TASK:
+List concrete, actionable code-quality suggestions (naming, structure,
+testability, performance, security). Return valid JSON only:
+{"suggestions":[{"category":"","description":"","priority":""}]}

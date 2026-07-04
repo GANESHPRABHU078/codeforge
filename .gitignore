@@ -1,0 +1,231 @@
+# ============================================================
+# ProjectForge AI — .gitignore
+# Covers: Node.js, Java/Maven, Python, Docker, IDE, OS files
+# ============================================================
+
+# ─────────────────────────────────────────────
+# ENVIRONMENT & SECRETS (NEVER commit these)
+# ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+
+# Local runtime data (MongoDB, ChromaDB binaries)
+.runtime/
+
+# ─────────────────────────────────────────────
+# NODE.JS / REACT FRONTEND
+# ─────────────────────────────────────────────
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Vite build output
+dist/
+dist-ssr/
+.vite/
+
+# Vite cache
+**/.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# ─────────────────────────────────────────────
+# JAVA / SPRING BOOT BACKEND
+# ─────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# Maven wrapper
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties
+
+# Gradle (if used)
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Boot devtools restart file
+.spring-boot-devtools.properties
+
+# ─────────────────────────────────────────────
+# PYTHON / FASTAPI VECTOR SERVICE
+# ─────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ─────────────────────────────────────────────
+# CHROMADB / VECTOR STORE DATA
+# ─────────────────────────────────────────────
+chroma_data/
+vector-service/chroma_data/
+*.chroma
+
+# ─────────────────────────────────────────────
+# DOCKER
+# ─────────────────────────────────────────────
+.dockerignore
+docker-compose.override.yml
+*.dockerenv
+
+# ─────────────────────────────────────────────
+# LOGS
+# ─────────────────────────────────────────────
+logs/
+*.log
+*.log.*
+log/
+
+# Spring Boot logs
+spring.log
+
+# ─────────────────────────────────────────────
+# IDE — IntelliJ IDEA
+# ─────────────────────────────────────────────
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# ─────────────────────────────────────────────
+# IDE — VS Code
+# ─────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.code-workspace
+
+# ─────────────────────────────────────────────
+# IDE — Eclipse
+# ─────────────────────────────────────────────
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# ─────────────────────────────────────────────
+# IDE — NetBeans
+# ─────────────────────────────────────────────
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# ─────────────────────────────────────────────
+# OS — Windows
+# ─────────────────────────────────────────────
+Thumbs.db
+Thumbs.db:encstore
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ─────────────────────────────────────────────
+# OS — macOS
+# ─────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ─────────────────────────────────────────────
+# OS — Linux
+# ─────────────────────────────────────────────
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ─────────────────────────────────────────────
+# RUNTIME / TEMP FILES
+# ─────────────────────────────────────────────
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+*.pid
+*.seed
+*.pid.lock
+
+# ─────────────────────────────────────────────
+# SECURITY — Never commit these
+# ─────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+*.keystore
+*.jks
+secrets/
