@@ -9,8 +9,12 @@ const axiosClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-
 axiosClient.interceptors.request.use((config) => {
+  // Strip leading slash to prevent Axios from overriding the /api path of the baseURL in production
+  if (config.url && config.url.startsWith('/')) {
+    config.url = config.url.substring(1)
+  }
+
   const token = localStorage.getItem('accessToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
