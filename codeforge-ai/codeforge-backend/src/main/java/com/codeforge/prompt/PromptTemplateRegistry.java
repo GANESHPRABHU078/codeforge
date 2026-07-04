@@ -51,8 +51,11 @@ public class PromptTemplateRegistry {
     }
 
     private String loadTemplate(TemplateName name) {
-        try (var is = new ClassPathResource(name.getPath()).getInputStream()) {
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        try {
+            ClassPathResource resource = new ClassPathResource(name.getPath());
+            try (java.io.InputStream is = resource.getInputStream()) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
         } catch (IOException e) {
             throw new IllegalStateException("Could not load prompt template: " + name.getPath(), e);
         }
