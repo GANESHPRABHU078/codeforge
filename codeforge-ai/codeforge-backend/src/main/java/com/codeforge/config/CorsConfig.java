@@ -19,7 +19,14 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        
+        // Allows any .vercel.app deployment URL and local development hosts
+        configuration.setAllowedOriginPatterns(List.of(
+            "https://*.vercel.app",
+            "http://localhost:*",
+            "http://127.0.0.1:*"
+        ));
+        
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
