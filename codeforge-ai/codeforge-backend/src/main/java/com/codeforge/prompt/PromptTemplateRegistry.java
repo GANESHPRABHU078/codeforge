@@ -21,6 +21,8 @@ public class PromptTemplateRegistry {
 
     public enum TemplateName {
         CODE_GENERATION("prompt/templates/code_generation.txt"),
+        BLUEPRINT_GENERATION("prompt/templates/blueprint_generation.txt"),
+        FILE_CONTENT_GENERATION("prompt/templates/file_content_generation.txt"),
         SELF_REFLECTION("prompt/templates/self_reflection.txt"),
         EXPLAIN_CODE("prompt/templates/explain_code.txt"),
         GENERATE_TESTS("prompt/templates/generate_tests.txt"),

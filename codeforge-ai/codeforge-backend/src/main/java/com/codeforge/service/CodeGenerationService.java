@@ -5,6 +5,7 @@ import com.codeforge.dto.response.GeneratedCodeResponse;
 import com.codeforge.dto.response.GeneratedFileDto;
 import com.codeforge.entity.*;
 import com.codeforge.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class CodeGenerationService {
     private final RagService ragService;
     private final PromptEngineeringService promptEngineeringService;
     private final LlmProviderRouter llmProviderRouter;
+    private final ObjectMapper objectMapper;
 
     private final ProjectRepository projectRepository;
     private final GeneratedFileRepository fileRepository;
@@ -33,17 +35,46 @@ public class CodeGenerationService {
 
         List<String> ragContext = ragService.retrieveContext(request.getRequirement(), userId, 4);
 
-        String prompt = promptEngineeringService.buildCodeGenPrompt(request, ragContext);
-        String rawOutput = llmProviderRouter.getActiveClient().generate(prompt);
-        String reflectedOutput = promptEngineeringService.applySelfReflection(rawOutput);
+        // 1. Generate Architectural Project Blueprint
+        String blueprintPrompt = promptEngineeringService.buildBlueprintPrompt(request, ragContext);
+        String rawBlueprint = llmProviderRouter.getActiveClient().generate(blueprintPrompt);
+        
+        GeneratedBlueprint blueprint = parseBlueprint(rawBlueprint);
 
-        GeneratedCodeResult result = promptEngineeringService.parseJsonOutput(reflectedOutput);
+        // 2. Iteratively generate the complete code for each file in the blueprint
+        List<GeneratedFileDto> generatedFiles = new java.util.ArrayList<>();
+        for (BlueprintFile bf : blueprint.getFiles()) {
+            try {
+                String filePrompt = promptEngineeringService.buildFileContentPrompt(
+                    request, rawBlueprint, bf.getFileName(), bf.getFilePath(), bf.getPurpose()
+                );
+                String rawCode = llmProviderRouter.getActiveClient().generate(filePrompt);
+                String cleanedCode = stripMarkdownFences(rawCode);
+
+                generatedFiles.add(GeneratedFileDto.builder()
+                        .fileName(bf.getFileName())
+                        .filePath(bf.getFilePath())
+                        .content(cleanedCode)
+                        .language(bf.getLanguageFromFile())
+                        .build());
+            } catch (Exception e) {
+                // If a specific file fails to generate, do not crash the entire build — fallback with placeholder
+                generatedFiles.add(GeneratedFileDto.builder()
+                        .fileName(bf.getFileName())
+                        .filePath(bf.getFilePath())
+                        .content("// Error generating file content: " + e.getMessage())
+                        .language(bf.getLanguageFromFile())
+                        .build());
+            }
+        }
+
+        GeneratedCodeResult result = new GeneratedCodeResult(generatedFiles, blueprint.getSummary());
 
         Project project = resolveProject(request, userId, result);
         int newVersion = persistFiles(project, result.getFiles());
         persistVersionSnapshot(project, result, newVersion);
         indexGeneratedFiles(result.getFiles(), userId, project.getId());
-        recordPromptHistory(project, userId, request.getRequirement(), prompt, result);
+        recordPromptHistory(project, userId, request.getRequirement(), blueprintPrompt, result);
 
         return GeneratedCodeResponse.builder()
                 .projectId(project.getId())
@@ -145,5 +176,67 @@ public class CodeGenerationService {
                 .build();
 
         promptHistoryRepository.save(history);
+    }
+
+    private GeneratedBlueprint parseBlueprint(String rawBlueprint) {
+        String cleaned = stripMarkdownFences(rawBlueprint);
+        try {
+            return objectMapper.readValue(cleaned, GeneratedBlueprint.class);
+        } catch (Exception e) {
+            // Fallback: create a basic plan if LLM failed to output correct JSON
+            return GeneratedBlueprint.builder()
+                .title("Software System")
+                .summary("Generated system blueprint (fallback plan).")
+                .files(List.of(
+                    new BlueprintFile("README.md", ".", "Project documentation and setup guide"),
+                    new BlueprintFile("App.java", "src/main/java/com/codeforge", "Main Spring Boot entry point")
+                ))
+                .build();
+        }
+    }
+
+    private String stripMarkdownFences(String text) {
+        if (text == null) return "";
+        return text.replaceAll("(?s)```[a-zA-Z0-9-]*\\s*", "")
+                   .replaceAll("(?s)```\\s*", "")
+                   .trim();
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    @lombok.Builder
+    private static class GeneratedBlueprint {
+        private String title;
+        private String summary;
+        private List<BlueprintFile> files;
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    @lombok.Builder
+    private static class BlueprintFile {
+        private String fileName;
+        private String filePath;
+        private String purpose;
+
+        public String getLanguageFromFile() {
+            if (fileName == null) return "text";
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".java")) return "java";
+            if (lower.endsWith(".js") || lower.endsWith(".jsx")) return "javascript";
+            if (lower.endsWith(".ts") || lower.endsWith(".tsx")) return "typescript";
+            if (lower.endsWith(".py")) return "python";
+            if (lower.endsWith(".html")) return "html";
+            if (lower.endsWith(".css")) return "css";
+            if (lower.endsWith(".json")) return "json";
+            if (lower.endsWith(".xml")) return "xml";
+            if (lower.endsWith(".yml") || lower.endsWith(".yaml")) return "yaml";
+            if (lower.endsWith(".sh")) return "shell";
+            if (lower.endsWith(".sql")) return "sql";
+            if (lower.endsWith("dockerfile")) return "dockerfile";
+            return "text";
+        }
     }
 }

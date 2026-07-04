@@ -39,6 +39,30 @@ public class PromptEngineeringService {
         return templateRegistry.render(TemplateName.CODE_GENERATION, vars);
     }
 
+    public String buildBlueprintPrompt(GenerateCodeRequest request, List<String> ragContext) {
+        Map<String, String> vars = new HashMap<>();
+        vars.put("user_requirement", request.getRequirement());
+        vars.put("tech_stack", request.getTechStack() == null ? "Java, Spring Boot, React, MongoDB"
+                : String.join(", ", request.getTechStack()));
+        vars.put("rag_context", ragContext.isEmpty() ? "(no prior related context found)"
+                : String.join("\n---\n", ragContext));
+
+        return templateRegistry.render(TemplateName.BLUEPRINT_GENERATION, vars);
+    }
+
+    public String buildFileContentPrompt(GenerateCodeRequest request, String blueprintContext, String targetFileName, String targetFilePath, String targetFilePurpose) {
+        Map<String, String> vars = new HashMap<>();
+        vars.put("user_requirement", request.getRequirement());
+        vars.put("tech_stack", request.getTechStack() == null ? "Java, Spring Boot, React, MongoDB"
+                : String.join(", ", request.getTechStack()));
+        vars.put("blueprint_context", blueprintContext);
+        vars.put("target_file_name", targetFileName);
+        vars.put("target_file_path", targetFilePath);
+        vars.put("target_file_purpose", targetFilePurpose);
+
+        return templateRegistry.render(TemplateName.FILE_CONTENT_GENERATION, vars);
+    }
+
     /** Runs a second LLM pass that reviews and corrects the first output. */
     public String applySelfReflection(String rawGeneratedJson) {
         Map<String, String> vars = Map.of("generated_code_json", rawGeneratedJson);
