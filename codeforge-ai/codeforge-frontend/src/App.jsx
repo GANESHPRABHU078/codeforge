@@ -10,6 +10,10 @@ import GenerationResult from './pages/GenerationResult'
 import ProjectHistory from './pages/ProjectHistory'
 import ProjectDetail from './pages/ProjectDetail'
 import ChatWithCode from './pages/ChatWithCode'
+import Settings from './pages/Settings'
+import CodeSnippets from './pages/CodeSnippets'
+import Favorites from './pages/Favorites'
+import AiAssistant from './pages/AiAssistant'
 
 export default function App() {
   const location = useLocation()
@@ -32,6 +36,10 @@ export default function App() {
             <Route path="/projects/:id/detail" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             <Route path="/projects/:id/chat" element={<ProtectedRoute><ChatWithCode /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><ProjectHistory /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/snippets" element={<ProtectedRoute><CodeSnippets /></ProtectedRoute>} />
+            <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+            <Route path="/assistant" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           </Routes>
         </main>
