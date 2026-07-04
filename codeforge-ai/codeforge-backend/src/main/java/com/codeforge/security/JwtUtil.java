@@ -24,7 +24,16 @@ public class JwtUtil {
     private long refreshTokenExpiryMs;
 
     private SecretKey key() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            try {
+                java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                keyBytes = digest.digest(keyBytes);
+            } catch (java.security.NoSuchAlgorithmException e) {
+                // Fallback (safe as JVMs support SHA-256)
+            }
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateAccessToken(String email) {
