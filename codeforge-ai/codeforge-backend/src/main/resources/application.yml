@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -7,6 +7,12 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/codeforge}
+      auto-index-creation: true
+  # Increase startup connection timeout for slow Atlas connections on free Render tier
+  task:
+    execution:
+      pool:
+        core-size: 2
 
 jwt:
   secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-production}
@@ -38,3 +44,5 @@ springdoc:
 logging:
   level:
     com.codeforge: DEBUG
+    org.mongodb.driver: WARN
+
