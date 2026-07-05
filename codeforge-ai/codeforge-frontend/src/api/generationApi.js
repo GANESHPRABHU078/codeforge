@@ -2,7 +2,8 @@ import axiosClient from './axiosClient'
 
 export const generationApi = {
   generateCode:          (payload) => axiosClient.post('/generate/code', payload),
-  modifyProject:         (payload) => axiosClient.post('/generate/code', payload), // same endpoint, includes projectId
+  modifyProject:         (payload) => axiosClient.post('/generate/code', payload),
+  getJobStatus:          (jobId)   => axiosClient.get(`/generate/status/${jobId}`),
   explain:               (payload) => axiosClient.post('/generate/explain', payload),
   generateTests:         (payload) => axiosClient.post('/generate/tests', payload),
   generateDocs:          (payload) => axiosClient.post('/generate/docs', payload),
@@ -11,4 +12,3 @@ export const generationApi = {
   qualitySuggestions:    (payload) => axiosClient.post('/generate/quality-suggestions', payload),
   deploymentSuggestions: (payload) => axiosClient.post('/generate/deployment-suggestions', payload),
 }
-

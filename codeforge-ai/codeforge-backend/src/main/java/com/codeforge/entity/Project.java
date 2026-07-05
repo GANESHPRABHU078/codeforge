@@ -32,4 +32,11 @@ public class Project {
 
     private Instant createdAt;
     private Instant updatedAt;
+
+    /** User-marked favorite flag — default false (additive, no migration needed). */
+    @Builder.Default
+    private boolean favorite = false;
+
+    /** Short AI-generated summary of the project — populated after generation completes. */
+    private String summary;
 }

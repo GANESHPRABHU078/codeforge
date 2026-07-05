@@ -17,12 +17,15 @@ Endpoints:
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import numpy as np
 import json
 import os
 import uuid
+import time
+import psutil
 
 # ─────────────────────────────────────────────
 # App Setup
@@ -30,7 +33,16 @@ import uuid
 app = FastAPI(
     title="CodeForge AI - Vector Service",
     description="Lightweight vector store for RAG — no PyTorch required",
-    version="2.0.0",
+    version="2.1.0",
+)
+
+# CORS — allow requests from Vercel frontend and local dev
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Persist vector store to a JSON file (mounted volume on Docker / Render disk)
@@ -138,6 +150,29 @@ def health():
     return {
         "status": "ok",
         "vectors_stored": len(vector_store),
+        "version": "2.1.0",
+    }
+
+
+@app.get("/health/detailed")
+def health_detailed():
+    """Detailed health info with memory usage."""
+    try:
+        mem = psutil.virtual_memory()
+        memory_mb = round(mem.used / 1024 / 1024, 1)
+        memory_pct = mem.percent
+    except Exception:
+        memory_mb = -1
+        memory_pct = -1
+
+    projects = set(v["metadata"].get("project_id") for v in vector_store)
+    return {
+        "status": "ok",
+        "vectors_stored": len(vector_store),
+        "unique_projects": len(projects),
+        "memory_used_mb": memory_mb,
+        "memory_used_pct": memory_pct,
+        "version": "2.1.0",
     }
 
 

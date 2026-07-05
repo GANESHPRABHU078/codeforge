@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -34,6 +35,14 @@ public class ProjectController {
             @AuthenticationPrincipal UserDetails user,
             @RequestParam String q) {
         return ResponseEntity.ok(projectService.searchProjects(user.getUsername(), q));
+    }
+
+    /** Recent projects (last N) — GET /api/projects/recent */
+    @GetMapping("/recent")
+    public ResponseEntity<List<ProjectSummaryResponse>> recent(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(projectService.getRecentProjects(user.getUsername(), limit));
     }
 
     @GetMapping("/{id}")
@@ -60,5 +69,14 @@ public class ProjectController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"project-" + id + ".zip\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(zip);
+    }
+
+    /** Toggle favorite — PATCH /api/projects/{id}/favorite */
+    @PatchMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, Object>> toggleFavorite(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable String id) {
+        boolean isFav = projectService.toggleFavorite(id, user.getUsername());
+        return ResponseEntity.ok(Map.of("favorite", isFav, "projectId", id));
     }
 }

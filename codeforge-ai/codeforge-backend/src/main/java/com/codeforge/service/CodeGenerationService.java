@@ -7,6 +7,8 @@ import com.codeforge.entity.*;
 import com.codeforge.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,6 +19,7 @@ import java.util.List;
  * RAG retrieval -> prompt build -> LLM call -> self-reflection ->
  * parse -> persist (Mongo + vector index) -> version snapshot.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CodeGenerationService {
@@ -30,6 +33,47 @@ public class CodeGenerationService {
     private final GeneratedFileRepository fileRepository;
     private final PromptHistoryRepository promptHistoryRepository;
     private final VersionRepository versionRepository;
+    private final GenerationJobRepository jobRepository;
+
+    /**
+     * Creates a GenerationJob record (PENDING) and immediately returns its ID.
+     * The actual generation runs in a background thread via @Async.
+     */
+    public GenerationJob submitAsync(GenerateCodeRequest request, String userId) {
+        GenerationJob job = GenerationJob.builder()
+                .userId(userId)
+                .requirement(request.getRequirement())
+                .status("PENDING")
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+        job = jobRepository.save(job);
+        runGenerationAsync(job.getId(), request, userId);
+        return job;
+    }
+
+    @Async
+    public void runGenerationAsync(String jobId, GenerateCodeRequest request, String userId) {
+        GenerationJob job = jobRepository.findById(jobId).orElseThrow();
+        job.setStatus("RUNNING");
+        job.setUpdatedAt(Instant.now());
+        jobRepository.save(job);
+        try {
+            GeneratedCodeResponse result = generateCode(request, userId);
+            job.setStatus("COMPLETED");
+            job.setProjectId(result.getProjectId());
+            job.setTitle(result.getTitle());
+            job.setSummary(result.getSummary());
+            job.setVersion(result.getVersion());
+        } catch (Exception e) {
+            log.error("Async generation failed for job {}: {}", jobId, e.getMessage(), e);
+            job.setStatus("FAILED");
+            job.setErrorMessage(e.getMessage());
+        } finally {
+            job.setUpdatedAt(Instant.now());
+            jobRepository.save(job);
+        }
+    }
 
     public GeneratedCodeResponse generateCode(GenerateCodeRequest request, String userId) {
 

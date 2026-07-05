@@ -30,4 +30,10 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refresh(@RequestBody java.util.Map<String, String> body) {
         return ResponseEntity.ok(authService.refresh(body.get("refreshToken")));
     }
+
+    /** Simple health check — no auth required. Used by frontend to show API status. */
+    @GetMapping("/health")
+    public ResponseEntity<java.util.Map<String, String>> health() {
+        return ResponseEntity.ok(java.util.Map.of("status", "ok", "service", "codeforge-backend"));
+    }
 }

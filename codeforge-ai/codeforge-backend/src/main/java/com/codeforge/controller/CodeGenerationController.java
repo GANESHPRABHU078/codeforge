@@ -3,6 +3,8 @@ package com.codeforge.controller;
 import com.codeforge.dto.request.ActionOnProjectRequest;
 import com.codeforge.dto.request.GenerateCodeRequest;
 import com.codeforge.dto.response.GeneratedCodeResponse;
+import com.codeforge.entity.GenerationJob;
+import com.codeforge.repository.GenerationJobRepository;
 import com.codeforge.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/generate")
@@ -25,12 +29,39 @@ public class CodeGenerationController {
     private final CodeContextService codeContextService;
     private final PromptEngineeringService promptEngineeringService;
     private final LlmProviderRouter llmProviderRouter;
+    private final GenerationJobRepository jobRepository;
 
+    /** Returns jobId immediately; runs generation in background thread. */
     @PostMapping("/code")
-    public ResponseEntity<GeneratedCodeResponse> generateCode(
+    public ResponseEntity<Map<String, String>> generateCode(
             @Valid @RequestBody GenerateCodeRequest request,
             @AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(codeGenerationService.generateCode(request, user.getUsername()));
+        GenerationJob job = codeGenerationService.submitAsync(request, user.getUsername());
+        return ResponseEntity.accepted().body(Map.of("jobId", job.getId(), "status", "PENDING"));
+    }
+
+    /** Poll this endpoint to check generation progress. */
+    @GetMapping("/status/{jobId}")
+    public ResponseEntity<?> getJobStatus(
+            @PathVariable String jobId,
+            @AuthenticationPrincipal UserDetails user) {
+        return jobRepository.findById(jobId)
+                .map(job -> {
+                    if ("COMPLETED".equals(job.getStatus())) {
+                        return ResponseEntity.ok(Map.of(
+                                "status", job.getStatus(),
+                                "projectId", job.getProjectId(),
+                                "title",     job.getTitle() != null ? job.getTitle() : "",
+                                "summary",   job.getSummary() != null ? job.getSummary() : "",
+                                "version",   job.getVersion() != null ? job.getVersion() : 1
+                        ));
+                    }
+                    return ResponseEntity.ok(Map.of(
+                            "status",  job.getStatus(),
+                            "error",   job.getErrorMessage() != null ? job.getErrorMessage() : ""
+                    ));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/explain")
