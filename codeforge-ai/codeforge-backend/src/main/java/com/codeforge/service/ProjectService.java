@@ -1,5 +1,7 @@
 package com.codeforge.service;
 
+import com.codeforge.dto.response.GeneratedFileDto;
+import com.codeforge.dto.response.ProjectDetailResponse;
 import com.codeforge.dto.response.ProjectSummaryResponse;
 import com.codeforge.entity.GeneratedFile;
 import com.codeforge.entity.Project;
@@ -35,6 +37,44 @@ public class ProjectService {
     public Project getProjectOrThrow(String projectId, String userId) {
         return projectRepository.findByIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+    }
+
+    /**
+     * Returns full project detail including the latest-version generated files.
+     * Used by GET /api/projects/{id} so the frontend file tree is populated.
+     */
+    public ProjectDetailResponse getProjectDetail(String projectId, String userId) {
+        Project project = getProjectOrThrow(projectId, userId);
+
+        // Fetch all files and keep only the highest (latest) version
+        List<GeneratedFile> allFiles = fileRepository.findByProjectId(projectId);
+        int latestVersion = allFiles.stream()
+                .mapToInt(GeneratedFile::getVersion)
+                .max().orElse(1);
+        List<GeneratedFileDto> files = allFiles.stream()
+                .filter(f -> f.getVersion() == latestVersion)
+                .map(f -> GeneratedFileDto.builder()
+                        .fileName(f.getFileName())
+                        .filePath(f.getFilePath())
+                        .content(f.getContent())
+                        .language(f.getLanguage())
+                        .build())
+                .toList();
+
+        return ProjectDetailResponse.builder()
+                .id(project.getId())
+                .title(project.getTitle())
+                .originalRequirement(project.getOriginalRequirement())
+                .status(project.getStatus())
+                .techStack(project.getTechStack())
+                .tags(project.getTags())
+                .summary(project.getSummary())
+                .favorite(project.isFavorite())
+                .version(latestVersion)
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
+                .files(files)
+                .build();
     }
 
     public void deleteProject(String projectId, String userId) {

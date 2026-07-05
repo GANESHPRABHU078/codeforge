@@ -1,5 +1,6 @@
 package com.codeforge.controller;
 
+import com.codeforge.dto.response.ProjectDetailResponse;
 import com.codeforge.dto.response.ProjectSummaryResponse;
 import com.codeforge.entity.Project;
 import com.codeforge.service.ProjectService;
@@ -46,10 +47,10 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Project> getProject(
+    public ResponseEntity<ProjectDetailResponse> getProject(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable String id) {
-        return ResponseEntity.ok(projectService.getProjectOrThrow(id, user.getUsername()));
+        return ResponseEntity.ok(projectService.getProjectDetail(id, user.getUsername()));
     }
 
     @DeleteMapping("/{id}")
