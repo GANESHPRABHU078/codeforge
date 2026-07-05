@@ -1,15 +1,16 @@
 package com.codeforge.controller;
 
 import com.codeforge.dto.request.RegisterRequest;
+import com.codeforge.repository.GeneratedFileRepository;
 import com.codeforge.service.AuthService;
+import com.codeforge.service.LlmProviderRouter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,6 +20,8 @@ public class DebugController {
 
     private final MongoTemplate mongoTemplate;
     private final AuthService authService;
+    private final GeneratedFileRepository generatedFileRepository;
+    private final LlmProviderRouter llmProviderRouter;
 
     @GetMapping("/db")
     public ResponseEntity<Map<String, Object>> testDbConnection() {
@@ -97,5 +100,44 @@ public class DebugController {
             status.put("stackTrace", sw.toString().substring(0, Math.min(2000, sw.toString().length())));
         }
         return ResponseEntity.ok(status);
+    }
+    /** Check files in MongoDB for a project — no auth, for debugging. */
+    @GetMapping("/files/{projectId}")
+    public ResponseEntity<Map<String, Object>> checkFiles(@PathVariable String projectId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            var files = generatedFileRepository.findByProjectId(projectId);
+            result.put("projectId", projectId);
+            result.put("fileCount", files.size());
+            result.put("files", files.stream().map(f -> Map.of(
+                "fileName", f.getFileName(),
+                "filePath", f.getFilePath() != null ? f.getFilePath() : "",
+                "language", f.getLanguage() != null ? f.getLanguage() : "",
+                "version", f.getVersion(),
+                "contentLength", f.getContent() != null ? f.getContent().length() : 0
+            )).toList());
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    /** Test the active LLM provider with a tiny prompt — no auth, for debugging. */
+    @GetMapping("/llm")
+    public ResponseEntity<Map<String, Object>> testLlm() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String provider = llmProviderRouter.getActiveClient().providerName();
+            String response = llmProviderRouter.getActiveClient().generate(
+                "Reply with exactly this JSON and nothing else: {\"status\":\"ok\",\"provider\":\"" + provider + "\"}"
+            );
+            result.put("provider", provider);
+            result.put("success", true);
+            result.put("response", response);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return ResponseEntity.ok(result);
     }
 }

@@ -223,10 +223,12 @@ public class CodeGenerationService {
     }
 
     private GeneratedBlueprint parseBlueprint(String rawBlueprint) {
-        String cleaned = stripMarkdownFences(rawBlueprint);
+        String cleaned = extractJsonObject(rawBlueprint);
         try {
             return objectMapper.readValue(cleaned, GeneratedBlueprint.class);
         } catch (Exception e) {
+            log.warn("Blueprint JSON parse failed, using fallback. Raw response (first 500 chars): {}",
+                    rawBlueprint != null ? rawBlueprint.substring(0, Math.min(500, rawBlueprint.length())) : "null");
             // Fallback: create a basic plan if LLM failed to output correct JSON
             return GeneratedBlueprint.builder()
                 .title("Software System")
@@ -239,11 +241,24 @@ public class CodeGenerationService {
         }
     }
 
-    private String stripMarkdownFences(String text) {
-        if (text == null) return "";
-        return text.replaceAll("(?s)```[a-zA-Z0-9-]*\\s*", "")
-                   .replaceAll("(?s)```\\s*", "")
-                   .trim();
+    /**
+     * Robustly extracts the outermost JSON object from an LLM response.
+     * Handles cases where the model prepends conversational text like
+     * "Here is the blueprint:" or wraps in markdown fences.
+     */
+    private String extractJsonObject(String text) {
+        if (text == null || text.isBlank()) return "{}";
+        // First strip markdown fences
+        String stripped = text.replaceAll("(?s)```json\\s*", "")
+                              .replaceAll("(?s)```\\s*", "")
+                              .trim();
+        // Find the outermost { ... } block
+        int start = stripped.indexOf('{');
+        int end   = stripped.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            return stripped.substring(start, end + 1);
+        }
+        return stripped; // return as-is and let Jackson report the real error
     }
 
     @lombok.Data
