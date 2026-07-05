@@ -618,10 +618,9 @@ export default function GenerationResult() {
         </div>
       </div>
 
-    </div>
-
       {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showGitHub && <GitHubModal project={project} onClose={() => setShowGitHub(false)} />}
       {showDeploy && <DeployModal project={project} onClose={() => setShowDeploy(false)} />}
+    </div>
   )
 }
