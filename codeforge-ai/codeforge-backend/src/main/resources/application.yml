@@ -20,7 +20,7 @@ jwt:
   refresh-token-expiry-ms: 604800000   # 7 days
 
 llm:
-  provider: ${LLM_PROVIDER:GEMINI}     # GEMINI or GROQ
+  provider: ${LLM_PROVIDER:GROQ}       # GEMINI or GROQ — defaulting to GROQ
   gemini:
     api-key: ${GEMINI_API_KEY:}
     model: gemini-1.5-pro
@@ -28,7 +28,7 @@ llm:
     base-url: https://generativelanguage.googleapis.com/v1beta
   groq:
     api-key: ${GROQ_API_KEY:}
-    model: llama-3.1-70b-versatile
+    model: ${GROQ_MODEL:llama-3.3-70b-versatile}
     base-url: https://api.groq.com/openai/v1
 
 vector-service:

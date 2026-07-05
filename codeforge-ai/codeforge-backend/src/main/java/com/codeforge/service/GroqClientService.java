@@ -36,12 +36,14 @@ public class GroqClientService implements LlmClientService {
             Map<String, Object> requestBody = Map.of(
                 "model", model,
                 "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "temperature", 0.3
+                "temperature", 0.3,
+                "max_tokens", 8192
             );
 
             Map<?, ?> response = client.post()
                 .uri("/chat/completions")
                 .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
