@@ -6,6 +6,123 @@ import FileTree from '../components/FileTree'
 import CodeEditor from '../components/CodeEditor'
 import toast from 'react-hot-toast'
 
+// ── GitHub Push Modal ────────────────────────────────────────────────────────
+function GitHubModal({ project, onClose }) {
+  const [repoUrl, setRepoUrl] = useState('')
+  const [copied, setCopied] = useState(null)
+  const slug = (project?.title || 'my-project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const commands = [
+    { id: 'init',   cmd: 'git init',                                    desc: 'Initialize a new Git repository' },
+    { id: 'add',    cmd: 'git add .',                                    desc: 'Stage all project files' },
+    { id: 'commit', cmd: `git commit -m "Initial commit — ${project?.title || 'project'}"`, desc: 'Create the first commit' },
+    { id: 'branch', cmd: 'git branch -M main',                          desc: 'Rename branch to main' },
+    { id: 'remote', cmd: repoUrl ? `git remote add origin ${repoUrl}` : 'git remote add origin <YOUR_REPO_URL>', desc: 'Link to your GitHub repo' },
+    { id: 'push',   cmd: 'git push -u origin main',                     desc: 'Push code to GitHub' },
+  ]
+  const copyCmd = (cmd, id) => {
+    navigator.clipboard.writeText(cmd)
+    setCopied(id)
+    setTimeout(() => setCopied(null), 2000)
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}} onClick={onClose}>
+      <div className="glass-panel w-full max-w-xl p-6 space-y-5 rounded-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">Push to GitHub</h2>
+              <p className="text-xs text-slate-400">Follow these steps after downloading the ZIP</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs text-slate-400 font-semibold">Your GitHub Repo URL</label>
+          <input className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/60 placeholder:text-slate-600"
+            placeholder="https://github.com/yourusername/repo-name" value={repoUrl} onChange={e => setRepoUrl(e.target.value)} />
+          <p className="text-[10px] text-slate-600">Create an empty repo at <a href="https://github.com/new" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">github.com/new</a> first, then paste the URL above</p>
+        </div>
+        <div className="space-y-2">
+          {commands.map(({ id, cmd, desc }) => (
+            <div key={id} className="flex items-center gap-2 bg-slate-950/80 rounded-xl px-3 py-2.5 border border-slate-800 group">
+              <span className="text-slate-600 text-xs select-none">$</span>
+              <code className="flex-1 text-xs font-mono text-slate-200 select-all truncate">{cmd}</code>
+              <button onClick={() => copyCmd(cmd, id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-emerald-400 flex-shrink-0">
+                {copied === id ? <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
+                  : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>}
+              </button>
+            </div>
+          ))}
+        </div>
+        <a href="https://github.com/new" target="_blank" rel="noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white transition-colors">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+          Create New GitHub Repository
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ── Deploy Modal ─────────────────────────────────────────────────────────────
+function DeployModal({ project, onClose }) {
+  const title = project?.title || 'my-project'
+  const platforms = [
+    {
+      name: 'Render', color: 'from-violet-600 to-indigo-600', logo: '▲',
+      url: 'https://dashboard.render.com/select-repo',
+      steps: ['Push code to GitHub first', 'Go to render.com → New Web Service', 'Connect your GitHub repo', 'Set BUILD COMMAND: mvn clean package -DskipTests', 'Set START COMMAND: java -jar target/*.jar', 'Add env vars: GROQ_API_KEY, MONGO_URI, JWT_SECRET'],
+    },
+    {
+      name: 'Vercel', color: 'from-slate-700 to-slate-600', logo: '▲',
+      url: 'https://vercel.com/new',
+      steps: ['Push frontend folder to GitHub', 'Go to vercel.com → New Project', 'Import your GitHub repo', 'Set ROOT DIRECTORY to the frontend folder', 'Add env var: VITE_API_URL = your Render backend URL', 'Click Deploy'],
+    },
+  ]
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}} onClick={onClose}>
+      <div className="glass-panel w-full max-w-2xl p-6 space-y-5 rounded-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-white">Deploy Your Project</h2>
+            <p className="text-xs text-slate-400">Choose a platform to host your generated application</p>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {platforms.map(p => (
+            <div key={p.name} className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${p.color} flex items-center justify-center text-white text-sm font-bold`}>{p.logo}</div>
+                <span className="font-bold text-white">{p.name}</span>
+              </div>
+              <ol className="space-y-1.5">
+                {p.steps.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                    <span className="h-4 w-4 rounded-full bg-slate-800 border border-slate-700 text-[9px] font-bold text-slate-400 flex items-center justify-center flex-shrink-0 mt-0.5">{i+1}</span>
+                    {s}
+                  </li>
+                ))}
+              </ol>
+              <a href={p.url} target="_blank" rel="noreferrer"
+                className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r ${p.color} text-xs font-bold text-white hover:opacity-90 transition-opacity`}>
+                Deploy to {p.name} →
+              </a>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-start gap-2 bg-slate-950/40 rounded-xl border border-slate-800 p-3 text-xs text-slate-500">
+          <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Download the ZIP first, extract it, then push to GitHub before deploying.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Run-command detection helpers ───────────────────────────────────────────
 function inferRunCommands(project) {
   const stack = (project?.techStack || []).map((s) => s.toLowerCase())
@@ -98,6 +215,10 @@ export default function GenerationResult() {
   const [modifyLoading, setModifyLoading]   = useState(false)
   const [modifyStage, setModifyStage]       = useState(-1)
   const modifyTimerRef                      = useRef(null)
+
+  // GitHub + Deploy modal state
+  const [showGitHub, setShowGitHub]   = useState(false)
+  const [showDeploy, setShowDeploy]   = useState(false)
 
   // Copy feedback state
   const [copiedCmd, setCopiedCmd] = useState(null)
@@ -232,7 +353,15 @@ export default function GenerationResult() {
             </svg>
             Chat with Code
           </Link>
-          <button onClick={handleDownload} className="btn-primary py-2 flex items-center gap-2 text-sm">
+          <button onClick={() => setShowGitHub(true)} className="btn-secondary py-2 flex items-center gap-2 text-sm">
+            <svg className="w-4 h-4 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            Push to GitHub
+          </button>
+          <button onClick={() => setShowDeploy(true)} className="btn-primary py-2 flex items-center gap-2 text-sm" style={{background:'linear-gradient(135deg,#7c3aed,#4f46e5)'}}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            Deploy
+          </button>
+          <button onClick={handleDownload} className="btn-secondary py-2 flex items-center gap-2 text-sm">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
@@ -490,5 +619,9 @@ export default function GenerationResult() {
       </div>
 
     </div>
+
+      {/* ── Modals ───────────────────────────────────────────────────────── */}
+      {showGitHub && <GitHubModal project={project} onClose={() => setShowGitHub(false)} />}
+      {showDeploy && <DeployModal project={project} onClose={() => setShowDeploy(false)} />}
   )
 }

@@ -87,13 +87,17 @@ public class CodeGenerationService {
 
         // 2. Iteratively generate the complete code for each file in the blueprint
         List<GeneratedFileDto> generatedFiles = new java.util.ArrayList<>();
-        for (BlueprintFile bf : blueprint.getFiles()) {
+        for (int i = 0; i < blueprint.getFiles().size(); i++) {
+            BlueprintFile bf = blueprint.getFiles().get(i);
+            // Pause between files to respect Groq free-tier rate limits (30 req/min)
+            if (i > 0) {
+                try { Thread.sleep(2200); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            }
             try {
                 String filePrompt = promptEngineeringService.buildFileContentPrompt(
                     request, rawBlueprint, bf.getFileName(), bf.getFilePath(), bf.getPurpose()
                 );
-                String rawCode = llmProviderRouter.getActiveClient().generate(filePrompt);
-                // extractJsonObject strips markdown fences and conversational prefixes
+                String rawCode = generateWithRetry(filePrompt);
                 String cleanedCode = rawCode != null ? rawCode
                         .replaceAll("(?s)```[a-zA-Z0-9-]*\\s*", "")
                         .replaceAll("(?s)```\\s*", "")
@@ -113,6 +117,7 @@ public class CodeGenerationService {
                         .content("// Error generating file content: " + e.getMessage())
                         .language(bf.getLanguageFromFile())
                         .build());
+
             }
         }
 
@@ -263,6 +268,24 @@ public class CodeGenerationService {
             return stripped.substring(start, end + 1);
         }
         return stripped; // return as-is and let Jackson report the real error
+    }
+
+    /**
+     * Calls the active LLM and retries once (after 6 s) on 429 rate-limit errors.
+     * Groq free tier allows ~30 req/min; retrying after a pause avoids permanent failures.
+     */
+    private String generateWithRetry(String prompt) {
+        try {
+            return llmProviderRouter.getActiveClient().generate(prompt);
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            if (msg.contains("429") || msg.toLowerCase().contains("rate limit") || msg.toLowerCase().contains("too many")) {
+                log.warn("Groq 429 rate-limit hit — waiting 6 s then retrying once");
+                try { Thread.sleep(6000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                return llmProviderRouter.getActiveClient().generate(prompt); // second attempt, let it throw if it fails again
+            }
+            throw e;
+        }
     }
 
     @lombok.Data
