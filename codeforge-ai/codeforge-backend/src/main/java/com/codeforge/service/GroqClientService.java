@@ -37,7 +37,7 @@ public class GroqClientService implements LlmClientService {
                 "model", model,
                 "messages", List.of(Map.of("role", "user", "content", prompt)),
                 "temperature", 0.3,
-                "max_tokens", 8192
+                "max_tokens", 4096
             );
 
             Map<?, ?> response = client.post()

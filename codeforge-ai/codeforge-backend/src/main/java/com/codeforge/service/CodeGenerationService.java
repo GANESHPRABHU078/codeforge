@@ -77,13 +77,17 @@ public class CodeGenerationService {
 
     public GeneratedCodeResponse generateCode(GenerateCodeRequest request, String userId) {
 
-        List<String> ragContext = ragService.retrieveContext(request.getRequirement(), userId, 4);
+        List<String> ragContext = ragService.retrieveContext(request.getRequirement(), userId, 2);
 
         // 1. Generate Architectural Project Blueprint
         String blueprintPrompt = promptEngineeringService.buildBlueprintPrompt(request, ragContext);
-        String rawBlueprint = llmProviderRouter.getActiveClient().generate(blueprintPrompt);
-        
+        String rawBlueprint = generateWithRetry(blueprintPrompt);
+
         GeneratedBlueprint blueprint = parseBlueprint(rawBlueprint);
+
+        // Build a compact file-manifest string so each per-file prompt doesn't
+        // carry the full raw blueprint JSON (which causes 413 Payload Too Large).
+        String compactManifest = buildCompactManifest(blueprint);
 
         // 2. Iteratively generate the complete code for each file in the blueprint
         List<GeneratedFileDto> generatedFiles = new java.util.ArrayList<>();
@@ -95,7 +99,7 @@ public class CodeGenerationService {
             }
             try {
                 String filePrompt = promptEngineeringService.buildFileContentPrompt(
-                    request, rawBlueprint, bf.getFileName(), bf.getFilePath(), bf.getPurpose()
+                    request, compactManifest, bf.getFileName(), bf.getFilePath(), bf.getPurpose()
                 );
                 String rawCode = generateWithRetry(filePrompt);
                 String cleanedCode = rawCode != null ? rawCode
@@ -286,6 +290,28 @@ public class CodeGenerationService {
             }
             throw e;
         }
+    }
+
+    /**
+     * Converts the full blueprint into a compact plain-text file list.
+     * Used as blueprint_context in per-file prompts to avoid 413 Payload Too Large
+     * errors — the raw JSON blueprint can be thousands of tokens when passed N times.
+     * Example output line: "1. PatientController.java — src/main/java/.../controller — Handle REST endpoints"
+     */
+    private String buildCompactManifest(GeneratedBlueprint blueprint) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Project: ").append(blueprint.getTitle()).append("\n");
+        sb.append("Summary: ").append(blueprint.getSummary()).append("\n\n");
+        sb.append("Files to generate:\n");
+        List<BlueprintFile> files = blueprint.getFiles();
+        for (int i = 0; i < files.size(); i++) {
+            BlueprintFile f = files.get(i);
+            sb.append(i + 1).append(". ").append(f.getFileName())
+              .append(" — ").append(f.getFilePath())
+              .append(" — ").append(f.getPurpose())
+              .append("\n");
+        }
+        return sb.toString();
     }
 
     @lombok.Data
