@@ -19,5 +19,6 @@ INSTRUCTIONS:
 3. Ensure this file imports or references other files in the PROJECT BLUEPRINT correctly using their respective folders and names.
 4. Keep the file focused and concise — aim for under 200 lines. Avoid unnecessary comments or boilerplate padding.
 5. Output ONLY the raw content of the target file. Do NOT wrap it in markdown block code fences, and do not add any conversational text before or after the code.
+6. If generating user interface code (HTML, CSS, React, JS, JSX), prioritize visual excellence and rich aesthetics. Avoid simple templates. Use cohesive, modern color palettes (sleek dark modes, gradient accents, glassmorphism), modern typography (like Inter or Outfit fonts), clean spacing, flex/grid layouts, and responsive designs. Make the UI interactive and highly polished so it looks premium and state-of-the-art.
 
 RAW SOURCE CODE CONTENT:

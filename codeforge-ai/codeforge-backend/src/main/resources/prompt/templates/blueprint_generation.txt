@@ -15,7 +15,7 @@ INSTRUCTIONS:
 2. The blueprint should list between 5 to 9 key files necessary to make this a fully functional, complete application (including backend code, frontend pages, configuration, and build/deploy configs).
 3. Do NOT use simple placeholder names or dummy files. Every file must be a real class, view, or configuration required for the project context.
 4. Output ONLY the JSON format below. Do not include markdown fences, comments, or explanations outside the JSON.
-
+5. If the user request contains any visual user interface, website, or dashboard frontend component, you MUST include a clean visual entry point (e.g. `index.html` or a React JSX/JS file) along with styling/script files so it can be run and previewed client-side.
 OUTPUT FORMAT:
 {
   "title": "A short descriptive title for the project",

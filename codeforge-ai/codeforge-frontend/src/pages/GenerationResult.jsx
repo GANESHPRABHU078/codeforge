@@ -4,6 +4,7 @@ import { projectApi } from '../api/projectApi'
 import { generationApi } from '../api/generationApi'
 import FileTree from '../components/FileTree'
 import CodeEditor from '../components/CodeEditor'
+import VisualSandbox from '../components/VisualSandbox'
 import toast from 'react-hot-toast'
 
 // ── GitHub Push Modal ────────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ export default function GenerationResult() {
   const [activeTab, setActiveTab]       = useState('explain')
   const [actionOutput, setActionOutput] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [viewMode, setViewMode]         = useState('code') // 'code' | 'preview'
 
   // Modify panel state
   const [modifyPrompt, setModifyPrompt]     = useState('')
@@ -390,19 +392,49 @@ export default function GenerationResult() {
           </div>
         </div>
 
-        {/* Code Editor */}
+        {/* Code Editor & Visual Preview Sandbox Panel */}
         <div className="lg:col-span-3 glass-panel p-4 flex flex-col h-[550px]">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-teal-400" />
-              <span className="text-xs font-mono text-slate-300">
-                {activeFile ? activeFile.filePath + activeFile.fileName : 'No file open'}
-              </span>
+              <button
+                onClick={() => setViewMode('code')}
+                className={`text-xs font-bold px-3.5 py-1.5 rounded-lg border transition-all duration-200 ${
+                  viewMode === 'code'
+                    ? 'bg-teal-500/10 text-teal-400 border-teal-500/20'
+                    : 'bg-slate-900/30 text-slate-500 border-transparent hover:text-slate-300'
+                }`}
+              >
+                Code View
+              </button>
+              <button
+                onClick={() => setViewMode('preview')}
+                className={`text-xs font-bold px-3.5 py-1.5 rounded-lg border transition-all duration-200 ${
+                  viewMode === 'preview'
+                    ? 'bg-teal-500/10 text-teal-400 border-teal-500/20'
+                    : 'bg-slate-900/30 text-slate-500 border-transparent hover:text-slate-300'
+                }`}
+              >
+                Live Preview
+              </button>
             </div>
-            <span className="text-xs text-slate-500 font-mono">{activeFile?.language || ''}</span>
+            
+            <div className="text-xs font-mono text-slate-400">
+              {viewMode === 'code' ? (
+                activeFile ? `${activeFile.filePath}${activeFile.fileName} (${activeFile.language})` : 'No file selected'
+              ) : (
+                'Visual Sandbox Mode'
+              )}
+            </div>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden bg-slate-950/60 border border-slate-800/80">
-            <CodeEditor file={activeFile} />
+          
+          <div className="flex-1 rounded-xl overflow-hidden">
+            {viewMode === 'code' ? (
+              <div className="w-full h-full bg-slate-950/60 border border-slate-800/80 rounded-xl overflow-hidden animate-fade-in">
+                <CodeEditor file={activeFile} />
+              </div>
+            ) : (
+              <VisualSandbox files={files.length ? files : (project?.files || [])} />
+            )}
           </div>
         </div>
       </div>
