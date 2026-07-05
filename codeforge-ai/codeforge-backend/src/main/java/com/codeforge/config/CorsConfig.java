@@ -22,8 +22,8 @@ public class CorsConfig {
             "https://*.vercel.app",      // all Vercel deployments
             "https://*.onrender.com",    // cross-service Render calls
             "http://localhost:*",         // local dev (any port)
-            "http://127.0.0.1:*",        // local dev (IP)
-            "*"                           // allow all — remove if you need strict security
+            "http://127.0.0.1:*"         // local dev (IP)
+            // NOTE: do NOT add "*" here — Spring rejects it when allowCredentials=true
         ));
 
         // ── Allowed Methods (include PATCH for favorite toggle) ──────────

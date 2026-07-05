@@ -40,12 +40,18 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const status = error.response?.status
+
+    // Retry on 401 (Unauthorized) OR 403 (Forbidden) — Spring Security can return
+    // either code when a JWT is missing/expired depending on the filter chain path.
+    if ((status === 401 || status === 403) && !originalRequest._retry) {
       originalRequest._retry = true
       try {
         const refreshToken = localStorage.getItem('refreshToken')
+        if (!refreshToken) throw new Error('No refresh token')
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
         localStorage.setItem('accessToken', data.accessToken)
+        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
         return axiosClient(originalRequest)
       } catch (refreshError) {
