@@ -93,7 +93,11 @@ public class CodeGenerationService {
                     request, rawBlueprint, bf.getFileName(), bf.getFilePath(), bf.getPurpose()
                 );
                 String rawCode = llmProviderRouter.getActiveClient().generate(filePrompt);
-                String cleanedCode = stripMarkdownFences(rawCode);
+                // extractJsonObject strips markdown fences and conversational prefixes
+                String cleanedCode = rawCode != null ? rawCode
+                        .replaceAll("(?s)```[a-zA-Z0-9-]*\\s*", "")
+                        .replaceAll("(?s)```\\s*", "")
+                        .trim() : "";
 
                 generatedFiles.add(GeneratedFileDto.builder()
                         .fileName(bf.getFileName())
